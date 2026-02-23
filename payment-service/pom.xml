@@ -7,8 +7,8 @@
 		<artifactId>eda-kafka-learning</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	<artifactId>order-service</artifactId>
-	<name>order-service</name>
+	<artifactId>payment-service</artifactId>
+	<name>payment-service</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>

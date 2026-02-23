@@ -1,9 +1,9 @@
 package com.harsha.order_service.kafka;
 
-import com.harsha.order_service.events.OrderPlacedEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import com.harsha.common.events.OrderPlacedEvent;
 
 @Service
 public class OrderEventProducer {
