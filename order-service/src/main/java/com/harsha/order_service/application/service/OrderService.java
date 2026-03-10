@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harsha.common.events.EventType;
 import com.harsha.common.events.OrderPlacedEvent;
 import com.harsha.common.events.PaymentProcessedEvent;
+import com.harsha.order_service.application.events.DomainEventPublisher;
 import com.harsha.order_service.domain.model.Order;
 import com.harsha.order_service.domain.model.OrderStatus;
 import com.harsha.order_service.domain.repository.OrderRepository;
@@ -18,19 +19,13 @@ import java.util.UUID;
 @Service
 public class OrderService {
     private final OrderRepository orderRepository;
-    private final OrderEventProducer orderEventProducer;
-    private final ObjectMapper objectMapper;
-    private final OutboxRepository outboxRepository;
+    private final DomainEventPublisher publisher;
 
     public OrderService(
             OrderRepository orderRepository,
-            OrderEventProducer orderEventProducer,
-            ObjectMapper objectMapper,
-            OutboxRepository outboxRepository) {
+            DomainEventPublisher publisher) {
         this.orderRepository = orderRepository;
-        this.orderEventProducer = orderEventProducer;
-        this.objectMapper = objectMapper;
-        this.outboxRepository = outboxRepository;
+        this.publisher = publisher;
     }
 
     @Transactional
@@ -51,21 +46,11 @@ public class OrderService {
                         order.getQuantity()
                 );
 
-        String payload;
-        try {
-            payload = objectMapper.writeValueAsString(event);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to serialize OrderPlacedEvent", e);
-        }
-
-        OutboxEvent outbox = new OutboxEvent(
-                UUID.randomUUID().toString(),
-                orderId,
-                EventType.ORDER_PLACED,
-                payload
-        );
-
-        outboxRepository.save(outbox);
+       publisher.publish(
+               orderId,
+               EventType.ORDER_PLACED,
+               event
+       );
         return orderId;
     }
 
