@@ -1,16 +1,11 @@
 package com.harsha.order_service.application.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.harsha.common.events.EventType;
 import com.harsha.common.events.OrderPlacedEvent;
 import com.harsha.common.events.PaymentProcessedEvent;
 import com.harsha.order_service.application.events.DomainEventPublisher;
 import com.harsha.order_service.domain.model.Order;
 import com.harsha.order_service.domain.model.OrderStatus;
 import com.harsha.order_service.domain.repository.OrderRepository;
-import com.harsha.order_service.infrastructure.messaging.OrderEventProducer;
-import com.harsha.order_service.infrastructure.outbox.OutboxEvent;
-import com.harsha.order_service.infrastructure.outbox.OutboxRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -48,7 +43,6 @@ public class OrderService {
 
        publisher.publish(
                orderId,
-               EventType.ORDER_PLACED,
                event
        );
         return orderId;

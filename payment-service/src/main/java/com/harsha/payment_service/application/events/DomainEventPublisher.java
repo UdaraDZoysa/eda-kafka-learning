@@ -1,4 +1,4 @@
-package com.harsha.order_service.application.events;
+package com.harsha.payment_service.application.events;
 
 import com.harsha.common.events.DomainEvent;
 

@@ -1,4 +1,4 @@
-package com.harsha.order_service.infrastructure.outbox;
+package com.harsha.payment_service.infrastructure.outbox;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -9,22 +9,22 @@ import java.time.Instant;
 import java.util.List;
 
 public interface OutboxRepository extends JpaRepository<OutboxEvent, String> {
-
     @Modifying
-    @Query(
-            value = """
-                DELETE FROM OutboxEvent e
-                    WHERE e.published = true
-                        AND e.createdAt < :cutoff
-            """)
+    @Query("""
+        DELETE FROM OutboxEvent e
+            WHERE e.published = true 
+                AND e.createdAt < :cutoff
+        """
+    )
     void deletePublishedOlderThan(@Param("cutoff") Instant cutoff);
 
+    @Modifying
     @Query(
             value = """
                 SELECT *
                     FROM outbox_events
                     WHERE published = false
-                    ORDER BY created_at
+                    ORDER BY createdAt 
                     LIMIT 20
                     FOR UPDATE SKIP LOCKED
                 """,

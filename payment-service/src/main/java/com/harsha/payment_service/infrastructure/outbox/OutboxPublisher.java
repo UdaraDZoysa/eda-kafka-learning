@@ -1,4 +1,4 @@
-package com.harsha.order_service.infrastructure.outbox;
+package com.harsha.payment_service.infrastructure.outbox;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,10 +21,10 @@ public class OutboxPublisher {
     private final KafkaTemplate<String, EventEnvelope> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
-    @Value("${topic.order}")
+    @Value("${topic.payment}")
     private String topic;
 
-    @Value("${topic.order.dlt}")
+    @Value("${topic.payment.dlt}")
     private String dltTopic;
 
     public OutboxPublisher(
@@ -56,15 +56,12 @@ public class OutboxPublisher {
                                 Instant.now(),
                                 payload
                         );
-
                 kafkaTemplate.send(
                         topic,
                         event.getAggregateId(),
                         envelope
                 ).get();
-
                 event.markPublished();
-
             } catch (Exception ex) {
                 event.markAttempt();
                 if (event.getRetryCount() > 5){
@@ -81,17 +78,17 @@ public class OutboxPublisher {
                             dltTopic,
                             event.getAggregateId(),
                             envelope
-                    );
+                    ).get();
                     event.markPublished();
                 }
             }
         }
-    }
 
+    }
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
     @Modifying
-    public void cleanup() {
+    public void cleanUp() {
         repository.deletePublishedOlderThan(
                 Instant.now().minus(7, ChronoUnit.DAYS)
         );

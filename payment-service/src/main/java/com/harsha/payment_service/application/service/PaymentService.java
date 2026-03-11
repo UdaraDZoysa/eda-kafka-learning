@@ -2,9 +2,9 @@ package com.harsha.payment_service.application.service;
 
 import com.harsha.common.events.OrderPlacedEvent;
 import com.harsha.common.events.PaymentProcessedEvent;
+import com.harsha.payment_service.application.events.DomainEventPublisher;
 import com.harsha.payment_service.domain.model.Payment;
 import com.harsha.payment_service.domain.repository.PaymentRepository;
-import com.harsha.payment_service.infrastructure.messaging.PaymentEventProducer;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,12 +17,12 @@ public class PaymentService {
     private static final Logger log =
             LoggerFactory.getLogger(PaymentService.class);
     private final PaymentRepository repository;
-    private final PaymentEventProducer producer;
+    private final DomainEventPublisher publisher;
 
     public PaymentService(PaymentRepository repository,
-                          PaymentEventProducer producer) {
+                          DomainEventPublisher publisher) {
         this.repository = repository;
-        this.producer = producer;
+        this.publisher = publisher;
     }
 
     @Transactional
@@ -41,9 +41,15 @@ public class PaymentService {
         //simulate success for now
         payment.succeed();
         repository.save(payment);
-        producer.publishPaymentProcessed(
-                new PaymentProcessedEvent(event.orderId(), true)
-        );
+        PaymentProcessedEvent paymentEvent =
+                new PaymentProcessedEvent(
+                        event.orderId(),
+                        true
+                );
+            publisher.publish(
+                    event.orderId(),
+                    paymentEvent
+            );
         log.info("Payment processed for orderId={}", event.orderId());
     }
 }
