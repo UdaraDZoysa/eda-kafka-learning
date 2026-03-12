@@ -1,0 +1,8 @@
+package com.harsha.payment_service.infrastructure.idempotency;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.UUID;
+
+public interface ProcessedEventRepository extends JpaRepository<ProcessedEvent, UUID> {
+}
