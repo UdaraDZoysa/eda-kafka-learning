@@ -63,7 +63,16 @@ public class OutboxPublisher {
                 ).get();
                 event.markPublished();
             } catch (Exception ex) {
+
+                long backoff = calculateBackoff(event.getRetryCount());
+
+                if (event.getLastAttemptAt() != null &&
+                        Instant.now().isBefore(event.getLastAttemptAt().plusMillis(backoff))) {
+                    continue;
+                }
+
                 event.markAttempt();
+
                 if (event.getRetryCount() > 5){
                     JsonNode payload = objectMapper.readTree(event.getPayload());
 
@@ -92,5 +101,13 @@ public class OutboxPublisher {
         repository.deletePublishedOlderThan(
                 Instant.now().minus(7, ChronoUnit.DAYS)
         );
+    }
+
+    private long calculateBackoff(int retryCount) {
+        long baseDelay = (long) Math.min(60000, Math.pow(2, retryCount) * 1000);
+
+        double jitter = 0.5 + Math.random();
+
+        return (long) (baseDelay * jitter);
     }
 }

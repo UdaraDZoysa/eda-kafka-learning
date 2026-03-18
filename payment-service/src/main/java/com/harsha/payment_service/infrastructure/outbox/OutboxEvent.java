@@ -71,6 +71,8 @@ public class OutboxEvent {
         return published;
     }
 
+    public Instant getLastAttemptAt() { return lastAttemptAt;}
+
     public int getRetryCount() {
         return retryCount;
     }

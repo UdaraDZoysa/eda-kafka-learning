@@ -69,6 +69,10 @@ public class OutboxEvent {
         return retryCount;
     }
 
+    public Instant getLastAttemptAt() {
+        return lastAttemptAt;
+    }
+
     public void markPublished() {
         published = true;
     }

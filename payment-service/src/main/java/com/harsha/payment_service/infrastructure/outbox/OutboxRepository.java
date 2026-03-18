@@ -24,7 +24,7 @@ public interface OutboxRepository extends JpaRepository<OutboxEvent, String> {
                 SELECT *
                     FROM outbox_events
                     WHERE published = false
-                    ORDER BY createdAt 
+                    ORDER BY created_at 
                     LIMIT 20
                     FOR UPDATE SKIP LOCKED
                 """,
