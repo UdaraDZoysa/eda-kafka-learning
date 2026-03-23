@@ -1,4 +1,4 @@
-package com.harsha.order_service.infrastructure.inbox;
+package com.harsha.payment_service.infrastructure.inbox;
 
 import com.harsha.common.events.EventType;
 import jakarta.persistence.*;
@@ -9,7 +9,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "inbox_events")
 public class InboxEvent {
-
     @Id
     private UUID id;
 
@@ -44,6 +43,8 @@ public class InboxEvent {
 
     public UUID getId() { return id; }
 
+    public String getAggregateId() { return aggregateId; }
+
     public EventType getEventType() { return eventType; }
 
     public String getPayload() { return payload; }
@@ -55,8 +56,6 @@ public class InboxEvent {
     public Instant getCreatedAt() { return createdAt; }
 
     public Instant getLastAttemptAt() { return lastAttemptAt; }
-
-    public String getAggregateId() { return aggregateId; }
 
     public void markProcessed() {
         this.processed = true;

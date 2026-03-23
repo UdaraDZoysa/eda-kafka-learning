@@ -2,15 +2,8 @@ package com.harsha.order_service.infrastructure.messaging;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harsha.common.events.EventEnvelope;
-import com.harsha.common.events.EventType;
-import com.harsha.common.events.PaymentProcessedEvent;
-import com.harsha.order_service.application.service.OrderService;
-import com.harsha.order_service.infrastructure.idempotency.ProcessedEvent;
-import com.harsha.order_service.infrastructure.idempotency.ProcessedEventRepository;
 import com.harsha.order_service.infrastructure.inbox.InboxEvent;
 import com.harsha.order_service.infrastructure.inbox.InboxRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
