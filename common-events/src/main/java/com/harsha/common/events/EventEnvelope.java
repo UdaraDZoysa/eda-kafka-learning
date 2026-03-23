@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public record EventEnvelope(
         UUID eventId,
+        String aggregateId,
         EventType eventType,
         int eventVersion,
         Instant occurredAt,

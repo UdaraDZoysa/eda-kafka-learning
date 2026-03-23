@@ -51,6 +51,7 @@ public class OutboxPublisher {
                 EventEnvelope envelope =
                         new EventEnvelope(
                                 UUID.fromString(event.getId()),
+                                event.getAggregateId(),
                                 event.getEventType(),
                                 1,
                                 Instant.now(),
@@ -81,6 +82,7 @@ public class OutboxPublisher {
 
                     EventEnvelope envelope = new EventEnvelope(
                             UUID.fromString(event.getId()),
+                            event.getAggregateId(),
                             event.getEventType(),
                             1,
                             Instant.now(),
@@ -90,7 +92,7 @@ public class OutboxPublisher {
                             dltTopic,
                             event.getAggregateId(),
                             envelope
-                    );
+                    ).get();
                     event.markPublished();
                 }
             }
