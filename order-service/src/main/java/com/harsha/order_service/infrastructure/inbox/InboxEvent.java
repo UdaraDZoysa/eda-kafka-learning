@@ -73,6 +73,7 @@ public class InboxEvent {
     }
 
     public boolean shouldRetry() {
-        return retryCount < 5;
+        return retryCount < 50 &&
+                createdAt.plusSeconds(3600).isAfter(Instant.now());
     }
 }

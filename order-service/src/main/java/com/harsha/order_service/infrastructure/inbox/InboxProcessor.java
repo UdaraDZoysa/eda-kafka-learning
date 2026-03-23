@@ -1,5 +1,7 @@
 package com.harsha.order_service.infrastructure.inbox;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.kafka.common.errors.SerializationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harsha.common.events.EventEnvelope;
 import com.harsha.common.events.EventType;
@@ -10,11 +12,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.List;
-
-import static org.apache.kafka.common.requests.DeleteAclsResponse.log;
 
 @Component
 public class InboxProcessor {
@@ -22,6 +24,7 @@ public class InboxProcessor {
     private final OrderService orderService;
     private final ObjectMapper objectMapper;
     private final KafkaTemplate<String, EventEnvelope> kafkaTemplate;
+    private static final Logger log = LoggerFactory.getLogger(InboxProcessor.class);
 
     @Value("${topic.payment.dlt}")
     private String dltTopic;
@@ -54,33 +57,11 @@ public class InboxProcessor {
                     orderService.handlePaymentResult(e);
                 }
                 event.markProcessed();
+            } catch (JsonProcessingException | SerializationException ex) {
+                sendToDLT(event, ex);
+
             } catch (Exception ex) {
-
-                long backoff = calculateBackoff(event.getRetryCount());
-
-                if (event.getLastAttemptAt() != null &&
-                        Instant.now().isBefore(event.getLastAttemptAt().plusMillis(backoff))) {
-                    continue;
-                }
-
-                event.markAttempt();
-                if (!event.shouldRetry()) {
-                    EventEnvelope envelope = new EventEnvelope(
-                            event.getId(),
-                            event.getAggregateId(),
-                            event.getEventType(),
-                            1,
-                            Instant.now(),
-                            objectMapper.readTree(event.getPayload())
-                    );
-                    log.error("Inbox event failed permanently → id={}", event.getId());
-                    kafkaTemplate.send(
-                            dltTopic,
-                            event.getAggregateId(),
-                            envelope
-                    );
-                    event.markProcessed();
-                }
+                handleRetry(event, ex);
             }
         }
     }
@@ -89,5 +70,52 @@ public class InboxProcessor {
         long baseDelay = (long) Math.min(60000, Math.pow(2, retryCount) * 1000);
         double jitter = 0.5 + Math.random();
         return (long) (baseDelay * jitter);
+    }
+
+    private void sendToDLT(InboxEvent event, Exception ex) {
+        try {
+            EventEnvelope envelope = new EventEnvelope(
+                    event.getId(),
+                    event.getAggregateId(),
+                    event.getEventType(),
+                    1,
+                    Instant.now(),
+                    objectMapper.readTree(event.getPayload())
+            );
+
+            log.error("Sending event to DLT. eventId={}, reason={}",
+                    event.getId(),
+                    ex.getMessage());
+
+            kafkaTemplate.send(
+                    dltTopic,
+                    event.getAggregateId(),
+                    envelope
+            ).get();
+
+            event.markProcessed();
+
+        } catch (Exception sendEx) {
+            log.error("Failed to publish inbox event to DLT → id={}, reason={}",
+                    event.getId(),
+                    sendEx.getMessage());
+            event.markAttempt();
+        }
+    }
+
+    private void handleRetry(InboxEvent event, Exception ex) {
+
+        long backoff = calculateBackoff(event.getRetryCount());
+
+        if (event.getLastAttemptAt() != null &&
+                Instant.now().isBefore(event.getLastAttemptAt().plusMillis(backoff))) {
+            return;
+        }
+
+        event.markAttempt();
+
+        if (!event.shouldRetry()) {
+            sendToDLT(event, ex);
+        }
     }
 }

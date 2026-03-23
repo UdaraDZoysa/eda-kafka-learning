@@ -1,14 +1,18 @@
 package com.harsha.order_service.infrastructure.outbox;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harsha.common.events.EventEnvelope;
 import jakarta.transaction.Transactional;
+import org.apache.kafka.common.errors.SerializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -20,6 +24,7 @@ public class OutboxPublisher {
     private final OutboxRepository repository;
     private final KafkaTemplate<String, EventEnvelope> kafkaTemplate;
     private final ObjectMapper objectMapper;
+    private static final Logger log = LoggerFactory.getLogger(OutboxPublisher.class);
 
     @Value("${topic.order}")
     private String topic;
@@ -66,35 +71,11 @@ public class OutboxPublisher {
 
                 event.markPublished();
 
+            } catch (JsonProcessingException | SerializationException ex){
+                sendToDLT(event, ex);
+
             } catch (Exception ex) {
-
-                long backoff = calculateBackoff(event.getRetryCount());
-
-                if (event.getLastAttemptAt() != null &&
-                    Instant.now().isBefore(event.getLastAttemptAt().plusMillis(backoff))) {
-                    continue;
-                }
-
-                event.markAttempt();
-
-                if (event.getRetryCount() > 5){
-                    JsonNode payload = objectMapper.readTree(event.getPayload());
-
-                    EventEnvelope envelope = new EventEnvelope(
-                            UUID.fromString(event.getId()),
-                            event.getAggregateId(),
-                            event.getEventType(),
-                            1,
-                            Instant.now(),
-                            payload
-                    );
-                    kafkaTemplate.send(
-                            dltTopic,
-                            event.getAggregateId(),
-                            envelope
-                    ).get();
-                    event.markPublished();
-                }
+                handleRetry(event);
             }
         }
     }
@@ -114,5 +95,39 @@ public class OutboxPublisher {
         double jitter = 0.5 + Math.random();
 
         return (long) (baseDelay * jitter);
+    }
+
+    private void sendToDLT(OutboxEvent event, Exception exp) {
+        try {
+            JsonNode payload = objectMapper.readTree(event.getPayload());
+
+            EventEnvelope envelope = new EventEnvelope(
+                    UUID.fromString(event.getId()),
+                    event.getAggregateId(),
+                    event.getEventType(),
+                    1,
+                    Instant.now(),
+                    payload
+            );
+            kafkaTemplate.send(
+                    dltTopic,
+                    event.getAggregateId(),
+                    envelope
+            ).get();
+            log.error("Sending event to DLT. eventId={}, reason={}",
+                    event.getId(),
+                    exp.getMessage());
+            event.markPublished();
+        } catch ( Exception ex){
+            handleRetry(event);
+        }
+    }
+    private void handleRetry(OutboxEvent event) {
+        long backoff = calculateBackoff(event.getRetryCount());
+        if (event.getLastAttemptAt() != null &&
+                Instant.now().isBefore(event.getLastAttemptAt().plusMillis(backoff))) {
+            return;
+        }
+        event.markAttempt();
     }
 }
