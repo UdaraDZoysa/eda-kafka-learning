@@ -3,14 +3,18 @@ package com.harsha.payment_service.infrastructure.outbox;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harsha.common.events.DomainEvent;
 import com.harsha.payment_service.application.events.DomainEventPublisher;
+import com.harsha.payment_service.infrastructure.inbox.InboxProcessor;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
 @Component
 public class OutboxEventPublisher implements DomainEventPublisher {
     private final OutboxRepository repository;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;private static final Logger log = LoggerFactory.getLogger(OutboxEventPublisher.class);
+
 
     public OutboxEventPublisher(
             OutboxRepository repository,
@@ -26,6 +30,7 @@ public class OutboxEventPublisher implements DomainEventPublisher {
             DomainEvent event
     ) {
         try {
+            log.info("#####Test1");
             String payload =
                     objectMapper.writeValueAsString(event);
 
@@ -38,6 +43,7 @@ public class OutboxEventPublisher implements DomainEventPublisher {
                     );
             repository.save(outboxEvent);
         } catch (Exception e) {
+            log.info("#####Test2");
             throw new RuntimeException(
                     "Failed to serialize domain event", e
             );

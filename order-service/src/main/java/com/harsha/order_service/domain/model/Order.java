@@ -9,6 +9,7 @@ import java.time.Instant;
 public class Order {
     @Id
     private String id;
+    private String userId;
     private String product;
     private int quantity;
     @Enumerated(EnumType.STRING)
@@ -17,8 +18,9 @@ public class Order {
 
     protected Order() {}
 
-    public Order(String id, String product, int quantity) {
+    public Order(String id, String userId, String product, int quantity) {
         this.id = id;
+        this.userId = userId;
         this.product = product;
         this.quantity = quantity;
         this.status = OrderStatus.CREATED;

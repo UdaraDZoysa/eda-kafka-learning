@@ -20,7 +20,7 @@ public class        OrderController {
     @PostMapping
     public ResponseEntity<String> placeOrder(@RequestBody PlaceOrderRequest request) {
         String orderId =
-                orderService.placeOrder(request.product(), request.quantity());
+                orderService.placeOrder(request.product(), request.userId() ,request.quantity());
         return ResponseEntity.ok("Order created with id: " + orderId);
     }
 }

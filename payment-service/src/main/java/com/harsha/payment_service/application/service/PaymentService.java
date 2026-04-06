@@ -37,13 +37,14 @@ public class PaymentService {
 
         log.info("Creating payment for orderId={}", event.orderId());
 
-        Payment payment = new Payment(paymentId, event.orderId());
+        Payment payment = new Payment(paymentId,event.userId(), event.orderId());
         //simulate success for now
         payment.succeed();
         repository.save(payment);
         PaymentProcessedEvent paymentEvent =
                 new PaymentProcessedEvent(
                         event.orderId(),
+                        event.userId(),
                         true
                 );
             publisher.publish(

@@ -2,6 +2,7 @@ package com.harsha.common.events;
 
 public record OrderPlacedEvent(
         String orderId,
+        String userId,
         String product,
         int quantity
 ) implements DomainEvent {

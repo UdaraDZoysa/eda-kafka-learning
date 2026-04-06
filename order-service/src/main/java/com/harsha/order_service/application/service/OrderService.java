@@ -24,11 +24,12 @@ public class OrderService {
     }
 
     @Transactional
-    public String placeOrder(String product, int quantity) {
+    public String placeOrder(String product, String userId, int quantity) {
         String orderId = "ORD-" + UUID.randomUUID();
         Order order =
                 new Order(
                         orderId,
+                        userId,
                         product,
                         quantity
                 );
@@ -37,6 +38,7 @@ public class OrderService {
         OrderPlacedEvent event =
                 new OrderPlacedEvent(
                         orderId,
+                        userId,
                         order.getProduct(),
                         order.getQuantity()
                 );
@@ -52,7 +54,7 @@ public class OrderService {
     public void handlePaymentResult(PaymentProcessedEvent event) {
         Order order = orderRepository
                 .findById(event.orderId())
-                .orElseThrow();
+                .orElseThrow(null);
         if (event.success()) {
             if (order.getStatus() == OrderStatus.PAYMENT_PENDING) {
                 order.complete();

@@ -60,7 +60,8 @@ public class OutboxPublisher {
                                 event.getEventType(),
                                 1,
                                 Instant.now(),
-                                payload
+                                payload,
+                                "order-service"
                         );
 
                 kafkaTemplate.send(
@@ -107,7 +108,8 @@ public class OutboxPublisher {
                     event.getEventType(),
                     1,
                     Instant.now(),
-                    payload
+                    payload,
+                    "order-service"
             );
             kafkaTemplate.send(
                     dltTopic,

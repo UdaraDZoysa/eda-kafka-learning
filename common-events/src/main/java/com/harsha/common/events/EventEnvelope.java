@@ -11,5 +11,6 @@ public record EventEnvelope(
         EventType eventType,
         int eventVersion,
         Instant occurredAt,
-        JsonNode payload
+        JsonNode payload,
+        String source
 ) {}

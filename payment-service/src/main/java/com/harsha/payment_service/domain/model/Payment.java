@@ -10,13 +10,15 @@ public class Payment {
     @Id
     private String id;
     private String orderId;
+    private String userId;
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
     private Instant createdAt;
 
     protected Payment() {}
-    public Payment(String id, String orderId) {
+    public Payment(String id,String userId, String orderId) {
         this.id = id;
+        this.userId = userId;
         this.orderId = orderId;
         this.createdAt = Instant.now();
         this.status = PaymentStatus.INITIATED;

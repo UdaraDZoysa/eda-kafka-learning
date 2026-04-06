@@ -33,7 +33,8 @@ public class InboxProcessor {
             InboxRepository repository,
             OrderService orderService,
             ObjectMapper objectMapper,
-            KafkaTemplate<String, EventEnvelope> kafkaTemplate) {
+            KafkaTemplate<String, EventEnvelope> kafkaTemplate
+    ) {
         this.repository = repository;
         this.orderService = orderService;
         this.objectMapper = objectMapper;
@@ -80,7 +81,8 @@ public class InboxProcessor {
                     event.getEventType(),
                     1,
                     Instant.now(),
-                    objectMapper.readTree(event.getPayload())
+                    objectMapper.readTree(event.getPayload()),
+                    "order-service"
             );
 
             log.error("Sending event to DLT. eventId={}, reason={}",
