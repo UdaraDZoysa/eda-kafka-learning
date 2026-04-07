@@ -14,8 +14,6 @@ This repo is a hands-on learning project to master:
 
 \- Reliability patterns (idempotency, retries, DLT)
 
-\- Agentic AI integration
-
 
 
 \## Services (planned)
@@ -27,8 +25,6 @@ This repo is a hands-on learning project to master:
 \- payment-service (consumer)
 
 \- notification-service
-
-\- ai-agent
 
 
 
